@@ -1,42 +1,34 @@
 import("stdfaust.lib");
 
-
 // *** COMPRESSOR ***
 
-compressorParam  = hslider("compressorParam", 6, 1, 20, 0.01);
-compressorDepth  = hslider("compressorDepth", 0, 0, 1, 0.01);
+compressorParam  = hslider("compressorParam", 6, 1, 20, 0.01) : si.smoo;
+compressorDepth  = hslider("compressorDepth", 0, 0, 1, 0.01) : si.smoo;
 
 compressor = _*(1+compressorDepth) <: _*(1-compressorDepth), compressorDepth*co.compressor_mono(compressorParam,-20,0.08,0.3) :> _ ;
 
 
-
 // *** FUZZ ***
-fuzzParam = hslider("fuzzParam", 0, 0, 1.2, 0.01);
-fuzzDepth  = hslider("fuzzDepth", 0, 0, 0.3, 0.001);
-fuzz = _ <: _*(1-fuzzDepth), fuzzDepth*ef.cubicnl(fuzzParam, 0.1) :> _*.5*(1-fuzzDepth*2.5);
+fuzzDepth = hslider("fuzzDepth", 0.75, 0.75, 30, 0.01) : si.smoo;
+fuzzParam = hslider("fuzzParam", 0.4, 0.03, 0.7, 0.01) : si.smoo;
+
+divide(input) = ((((input*fuzzDepth-1)/(input+(0.5/fuzzDepth + fuzzParam) : max(0.0001)) : ef.cubicnl(0,1)))/2 + (0 : ef.cubicnl(2,-1))*0.1);
+
+fuzz = (divide+0.15)/(3+0.25*fuzzDepth);
 
 
 // *** PHASER ***
 
-phaserParam  = hslider("phaserParam", 0.4, 0, 7, 0.001);
-phaserDepth  = hslider("phaserDepth", 1, 0, 1, 0.01);
+phaserParam  = hslider("phaserParam", 0.4, 0, 7, 0.001) : si.smoo;
+phaserDepth  = hslider("phaserDepth", 1, 0, 1, 0.01) : si.smoo;
 
 phaser = _ : pf.phaser2_mono(2, 0, 1000, 50, 1.25, 1000, phaserParam, phaserDepth, .3, 0);
 
 
-// *** ECHO ***
-
-/*
-echoParam = hslider("echoParam", 0.1, 0.05, .1, 0.01) : si.smoo : *(ma.SR);
-echoDepth  = hslider("echoDepth", 0, 0, 1.2, 0.01);
-echo = +~de.sdelay(0.1*ma.SR, 1024, echoParam)*(echoDepth-0.1 : max(0));
-*/
-
-
 // *** REVERB ***
 
-reverbParam  = hslider("reverbParam", 15, 1, 45, 0.01);
-reverbDepth  = hslider("reverbDepth", 0.4, 0, 1, 0.01);
+reverbParam  = hslider("reverbParam", 15, 1, 40, 0.01) : si.smoo;
+reverbDepth  = hslider("reverbDepth", 0.4, 0, 1, 0.01) : si.smoo;
 
 
 zita_rev_fdn(f1,f2,t60dc,t60m,fsmax) =
